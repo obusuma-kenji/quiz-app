@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>学習クイズ</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Hiragino Sans', 'Meiryo', sans-serif; background: #f0f0f8; min-height: 100vh; }
+.header { background: #4b44c8; color: white; padding: 14px 18px; display: flex; align-items: center; gap: 10px; }
+.header-title { font-size: 16px; font-weight: 600; }
+.header-icons { margin-left: auto; display: flex; gap: 8px; }
+.icon-btn { width: 32px; height: 32px; border-radius: 8px; background: rgba(255,255,255,0.2); border: none; color: white; cursor: pointer; font-size: 14px; }
+.progress-bar-wrap { background: #d8d6f0; height: 6px; }
+.progress-bar { background: #4b44c8; height: 6px; transition: width 0.4s; }
+.container { max-width: 600px; margin: 0 auto; padding: 1rem; }
+.meta { display: flex; justify-content: space-between; padding: 10px 0 14px; font-size: 13px; color: #666; }
+.correct-count { color: #4b44c8; font-weight: 600; }
+.card { background: white; border-radius: 12px; padding: 1.25rem; margin-bottom: 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+.q-header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.q-badge { background: #4b44c8; color: white; font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 20px; }
+.q-tag { background: #ede9fa; color: #4b44c8; font-size: 12px; padding: 3px 10px; border-radius: 20px; }
+.question-text { font-size: 15px; line-height: 1.8; border-left: 3px solid #b3acf0; padding-left: 12px; }
+.answer-card { background: #e8f9f0; border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 14px; display: none; }
+.answer-label { font-size: 12px; color: #2e7d52; margin-bottom: 6px; }
+.answer-text { font-size: 15px; line-height: 1.8; color: #1a5c38; }
+.btn-row { display: flex; gap: 10px; }
+.btn { flex: 1; padding: 14px; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; }
+.btn-correct { background: #2ecc71; color: white; }
+.btn-wrong { background: #e74c3c; color: white; }
+.btn-show { background: #4b44c8; color: white; width: 100%; padding: 14px; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; margin-bottom: 10px; }
+.result-screen { text-align: center; padding: 3rem 1rem; display: none; }
+.result-score { font-size: 56px; font-weight: 700; color: #4b44c8; }
+.result-label { font-size: 16px; color: #666; margin: 8px 0 8px; }
+.result-msg { color: #888; font-size: 14px; margin-bottom: 28px; }
+.btn-retry { background: #4b44c8; color: white; border: none; padding: 14px 36px; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; }
+</style>
+</head>
+<body>
+<div class="header">
+  <span style="font-size:20px;">📖</span>
+  <span class="header-title">学習クイズ</span>
+  <div class="header-icons">
+    <button class="icon-btn" title="シャッフル" onclick="shuffle()">⇄</button>
+    <button class="icon-btn" title="最初から" onclick="restart()">↺</button>
+  </div>
+</div>
+<div class="progress-bar-wrap"><div class="progress-bar" id="prog"></div></div>
+
+<div class="container">
+  <div id="quiz-area">
+    <div class="meta">
+      <span id="q-count">問題 1 / 50</span>
+      <span class="correct-count" id="c-count">正解：0 問</span>
+    </div>
+    <div class="card">
+      <div class="q-header">
+        <span class="q-badge" id="q-label">Q1</span>
+        <span class="q-tag" id="q-tag"></span>
+      </div>
+      <p class="question-text" id="q-text"></p>
+    </div>
+    <div class="answer-card" id="ans-card">
+      <div class="answer-label">💡 解答</div>
+      <p class="answer-text" id="ans-text"></p>
+    </div>
+    <button class="btn-show" id="show-btn" onclick="showAnswer()">解答を見る</button>
+    <div class="btn-row" id="judge-btns" style="display:none;">
+      <button class="btn btn-correct" onclick="judge(true)">✓ 正解</button>
+      <button class="btn btn-wrong" onclick="judge(false)">✕ 不正解</button>
+    </div>
+  </div>
+  <div class="result-screen" id="result-screen">
+    <div class="result-score" id="res-score"></div>
+    <div class="result-label" id="res-total">/ 50 問正解</div>
+    <p class="result-msg" id="res-msg"></p>
+    <button class="btn-retry" onclick="restart()">もう一度チャレンジ</button>
+  </div>
+</div>
+
+<script>
+const quizData = [
+  { tag:"成功の方程式", q:"森健次郎氏が提唱する、成果を出すための方程式は何ですか？", a:"結果 ＝ 質 × 量²" },
+  { tag:"成功の方程式", q:"成果の方程式において、量が「2乗」で効いてくる理由は何ですか？", a:"練習や行動の量が増えるほど、結果が曲線的に（指数関数的に）増大するため。" },
+  { tag:"夢・目標", q:"将来の夢が見つからない時、何を基準に行動すれば良いと述べられていますか？", a:"自分が「ときめく」もの、興味を惹かれるものを大事にすること。" },
+  { tag:"現代の行動", q:"憧れの人や相談したい人が多い場合、現代において推奨される具体的な行動は何ですか？", a:"インスタのダイレクトメール（DM）などで直接連絡を取ってみること。" },
+  { tag:"心技体", q:"「心技体」の中で、パフォーマンスを支える最も土台となる要素は何ですか？", a:"「心（考え方やメンタル）」" },
+  { tag:"心技体", q:"指の長さが変わるワークから学べる、心と体の関係性は何ですか？", a:"「心が変われば、体（物理的な状態）まで変わる」ということ。" },
+  { tag:"習慣・記憶", q:"一度身につけた感覚や知識を忘れないために必要なことは何ですか？", a:"毎日コツコツと継続し、短期記憶を長期記憶に定着させること。" },
+  { tag:"エネルギー", q:"試合前などの「礼（O）」には、どのようなエネルギー的意味がありますか？", a:"天とつながり、チャクラを通じてエネルギーを取り入れること。" },
+  { tag:"エネルギー", q:"エネルギーの法則において、「出す」ことと「入る」ことの関係はどう表されていますか？", a:"感謝やエネルギーを先に「出す」ことで、自分に「入って」くる。" },
+  { tag:"健康・姿勢", q:"授業前に姿勢を正し、足の裏を床につけることで得られる健康上のメリットは何ですか？", a:"舌が正しい位置（歯の裏）につき、呼吸が深くなって病気になりにくくなる。" },
+  { tag:"メンタル", q:"緊張をほぐすために、肩を上げた後にストンと落とす動作は何を意識して行いますか？", a:"肩甲骨を後ろでくっつけること。" },
+  { tag:"メンタル", q:"本番で緊張した時に唱える、マイナスを力に変える合言葉は何ですか？", a:"「マイナス × マイナス ＝ プラス」" },
+  { tag:"集中・呼吸", q:"集中力を高める呼吸法において、鼻から吸うことが推奨される理由は何ですか？", a:"脳は熱を嫌うため、鼻を通ることで空気を冷やし、脳をクールダウンさせるため。" },
+  { tag:"集中・呼吸", q:"「5・3・8呼吸法」の手順を教えてください。", a:"5秒吸い、3秒止め、8秒かけてゆっくり吐く。" },
+  { tag:"集中・呼吸", q:"呼吸法で息を吐く際のイメージである「落ちてくく」とはどういう意味ですか？", a:"気を下に降ろし、意識を落ち着かせる（落ち着く）こと。" },
+  { tag:"エネルギー", q:"東洋医学やスポーツで重視される、へその下のエネルギーの拠点を何と言いますか？", a:"「丹田（たんでん）」" },
+  { tag:"集中・マインド", q:"「音3つ（音見つけ）」ワークの目的は何ですか？", a:"意識を「今、ここ」に引き戻し、心を整えること。" },
+  { tag:"集中・マインド", q:"特定の対象に意識を絞る集中力を何と呼びますか？", a:"「一点集中（フォーカス）」" },
+  { tag:"集中・マインド", q:"周囲の状況を広く捉える集中力を何と呼びますか？", a:"「全体集中（コンセントレーション）」" },
+  { tag:"集中・マインド", q:"日常生活で「一点集中」と「全体集中」を交互に行うトレーニング例は何ですか？", a:"食事中に、おかず一品に集中することと、全体の献立を見ることを繰り返す。" },
+  { tag:"学び方", q:"何かを習得する際の基本的な心がけ（キーワード）は何ですか？", a:"「ゆっくり、丁寧に、心を込めて」" },
+  { tag:"PREP法", q:"文章構成の型「PREP法」の「P（Point）」は何を指しますか？", a:"結論・要点（まず何を伝えたいか）" },
+  { tag:"PREP法", q:"PREP法の「R（Reason）」は何を指しますか？", a:"理由（なぜならば、という根拠）" },
+  { tag:"PREP法", q:"「PREP法」の「E（Example）」は何を指しますか？", a:"具体的な例（相手に映像が浮かぶようなエピソード）" },
+  { tag:"コミュニケーション", q:"コミュニケーションにおいて、自分の話を相手に感動してもらうためのコツは何ですか？", a:"相手の脳内に「映像」が浮かぶように具体的に話すこと。" },
+  { tag:"整理整頓", q:"「整理」の定義として、最初に行うべき行動は何ですか？", a:"「いるもの」と「いらないもの」を分け、「いらないもの」を捨てること。" },
+  { tag:"整理整頓", q:"「整頓」の定義は何ですか？", a:"必要なものを、いつでも取り出せるように決まった場所に置くこと。" },
+  { tag:"成長・進化", q:"森氏が定義する「成長」とはどのような状態を指しますか？", a:"「できなかったことができるようになること」" },
+  { tag:"成長・進化", q:"森氏が定義する「進化」とはどのような状態を指しますか？", a:"成果を繰り返し、一段上のステージ（知らない世界）へ上がること。" },
+  { tag:"試合・挑戦", q:"試合（試し合い）の目的とされる2つの要素は何ですか？", a:"1．結果を出すこと、2．課題を見つけること。" },
+  { tag:"試合・挑戦", q:"一流アスリートがミスをした時にニヤリと笑うのはなぜですか？", a:"自分の「伸びしろ（課題）」を発見し、成長のチャンスだと捉えているから。" },
+  { tag:"メンタル", q:"ボール積みや試験の前に唱える、脳をリラックスさせるアファーメーションは何ですか？", a:"「簡単、簡単」" },
+  { tag:"成功イメージ", q:"「成功は2度起きる」という言葉の意味は何ですか？", a:"最初には「頭の中（イメージ）」で成功し、次には「現実」で成功するということ。" },
+  { tag:"集中・動作", q:"ジャグリングなどの練習で、パニックにならずに冷静さを保つ秘訣は何ですか？", a:"一つ一つの動作を「丁寧」に行うこと。" },
+  { tag:"時間の考え方", q:"アインシュタインなどの物理学者の視点に基づく、時間に関する考え方は何ですか？", a:"「過去は関係なく、今しかない」という考え方。" },
+  { tag:"言葉の力", q:"運を引き寄せるために、1日10回以上唱えると良い言葉は何ですか？", a:"「俺（私）って幸せだなぁ」" },
+  { tag:"自己信頼", q:"誰も見ていないところでゴミ拾いや掃除をすることが、なぜ自信に繋がりますか？", a:"「人が見ていないところで善いことをしている自分」を、自分自身が好きになれるから。" },
+  { tag:"メンタル", q:"緊張で頭が真っ白になった時、客観性を取り戻すためのテクニックは何ですか？", a:"自分の状況を心の中で「実況中継」すること。" },
+  { tag:"教育", q:"日本の学校教育に多い「減点主義」の弊害について、森氏はどう述べていますか？", a:"「弱み」ばかりにフォーカスしてしまいがちになること。" },
+  { tag:"強みの活かし方", q:"社会に出てから活躍するために、弱みよりもどこにフォーカスすべきですか？", a:"自分の「強み」や「いいところ」。" },
+  { tag:"習慣化", q:"物事を継続させるためのコツである「イフデン（If-Then）法」とは何ですか？", a:"「もし（If）〜したら、その時に（Then）〜する」と、行動のタイミングを固定すること。" },
+  { tag:"視野トレーニング", q:"視野を広げるトレーニングにおいて、眼球を動かす際のポイントは何ですか？", a:"眼を動かさず、目だけでターゲットを「心でタッチ」するように追うこと。" },
+  { tag:"視野トレーニング", q:"周辺視野が広がることによる、スポーツにおける具体的な利点は何ですか？", a:"ボールに集中しながら、相手や味方の動きを同時に把握できるようになる。" },
+  { tag:"心身の繋がり", q:"「心・体・技」の繋がりにおいて、体の不調を治したい時にまずアプローチすべき場所はどこですか？", a:"「心（正しいこと）」" },
+  { tag:"心身の繋がり", q:"逆に、心を元気にしたい時にアプローチすべき場所はどこですか？", a:"「体（を楽にすること、動かすこと）」" },
+  { tag:"目標設定", q:"高校3年間の卒業時に、達成しているべき2つの目標は何ですか？", a:"1．自分を好きになること、2．学ぶことが楽しいと思えること。" },
+  { tag:"学ぶ姿勢", q:"なぜ「学ぶことが楽しい」と思うことが重要なのですか？", a:"大人の平均勉強時間は1日6分と言われる中、学び続けられることが一生の武器になるため。" },
+  { tag:"メンタル", q:"プレッシャーがかかる場面ほど、体のどこに力を入れるべきですか？", a:"「お腹（丹田）」。そうすることで胸の力が抜け、冷静になれる。" },
+  { tag:"集中・呼吸", q:"情報のインプット効率を最大化するために、授業前にすべきことは何ですか？", a:"姿勢を正し、呼吸を整え、周囲の音を3つ見つけて心を「今」に置くこと。" },
+  { tag:"自己価値観", q:"自分の価値観を形成する「ときめき」を大切にすべき最大の理由は何ですか？", a:"答えは親でも先生でもなく、自分自身の中にしか存在しないから。" }
+];
+
+const total = quizData.length;
+let order = [...Array(total).keys()];
+let idx = 0, correct = 0;
+
+function shuffle() {
+  for (let i = order.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [order[i], order[j]] = [order[j], order[i]];
+  }
+  restart();
+}
+
+function render() {
+  const q = quizData[order[idx]];
+  document.getElementById('q-count').textContent = `問題 ${idx+1} / ${total}`;
+  document.getElementById('c-count').textContent = `正解：${correct} 問`;
+  document.getElementById('q-label').textContent = `Q${idx+1}`;
+  document.getElementById('q-tag').textContent = q.tag;
+  document.getElementById('q-text').textContent = q.q;
+  document.getElementById('ans-text').textContent = q.a;
+  document.getElementById('ans-card').style.display = 'none';
+  document.getElementById('show-btn').style.display = 'block';
+  document.getElementById('judge-btns').style.display = 'none';
+  document.getElementById('prog').style.width = ((idx / total) * 100) + '%';
+}
+
+function showAnswer() {
+  document.getElementById('ans-card').style.display = 'block';
+  document.getElementById('show-btn').style.display = 'none';
+  document.getElementById('judge-btns').style.display = 'flex';
+}
+
+function judge(ok) {
+  if (ok) correct++;
+  idx++;
+  if (idx >= total) showResult();
+  else render();
+}
+
+function showResult() {
+  document.getElementById('quiz-area').style.display = 'none';
+  document.getElementById('result-screen').style.display = 'block';
+  document.getElementById('res-score').textContent = correct;
+  document.getElementById('res-total').textContent = `/ ${total} 問正解`;
+  const pct = correct / total;
+  let msg = 'もう少し復習しましょう！';
+  if (pct >= 0.9) msg = '完璧！ほぼ全問正解です！';
+  else if (pct >= 0.7) msg = '素晴らしい！よく頑張りました！';
+  else if (pct >= 0.5) msg = '半分以上クリア！あと少し！';
+  document.getElementById('res-msg').textContent = msg;
+  document.getElementById('prog').style.width = '100%';
+}
+
+function restart() {
+  idx = 0; correct = 0;
+  document.getElementById('quiz-area').style.display = 'block';
+  document.getElementById('result-screen').style.display = 'none';
+  render();
+}
+
+render();
+</script>
+</body>
+</html>
