@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>集中力発揮の成果を出すのはAorB</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Hiragino Sans', 'Meiryo', sans-serif; background: #f0f0f8; min-height: 100vh; }
+.header { background: #4b44c8; color: white; padding: 14px 18px; display: flex; align-items: center; gap: 10px; }
+.header-title { font-size: 15px; font-weight: 600; line-height: 1.4; }
+.header-icons { margin-left: auto; display: flex; gap: 8px; flex-shrink: 0; }
+.icon-btn { width: 32px; height: 32px; border-radius: 8px; background: rgba(255,255,255,0.2); border: none; color: white; cursor: pointer; font-size: 14px; }
+.progress-bar-wrap { background: #d8d6f0; height: 6px; }
+.progress-bar { background: #4b44c8; height: 6px; transition: width 0.4s; }
+.container { max-width: 620px; margin: 0 auto; padding: 1rem; }
+.meta { display: flex; justify-content: space-between; padding: 10px 0 14px; font-size: 13px; color: #666; }
+.correct-count { color: #4b44c8; font-weight: 600; }
+.card { background: white; border-radius: 12px; padding: 1.25rem; margin-bottom: 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+.q-header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.q-badge { background: #4b44c8; color: white; font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 20px; }
+.q-tag { background: #ede9fa; color: #4b44c8; font-size: 12px; padding: 3px 10px; border-radius: 20px; }
+.question-text { font-size: 15px; line-height: 1.8; border-left: 3px solid #b3acf0; padding-left: 12px; }
+.choice-row { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
+.choice-btn { width: 100%; padding: 16px 18px; border: 2px solid #c8c4f0; border-radius: 10px; background: white; font-size: 15px; font-weight: 500; cursor: pointer; text-align: left; display: flex; align-items: flex-start; gap: 12px; transition: background 0.15s, border-color 0.15s; line-height: 1.6; }
+.choice-btn:hover:not(:disabled) { background: #f0eeff; border-color: #9990e0; }
+.choice-label { font-size: 13px; font-weight: 700; color: #4b44c8; background: #ede9fa; padding: 2px 8px; border-radius: 6px; flex-shrink: 0; margin-top: 2px; }
+.choice-btn.correct { background: #e8f9f0; border-color: #2ecc71; }
+.choice-btn.correct .choice-label { background: #2ecc71; color: white; }
+.choice-btn.wrong { background: #fef0f0; border-color: #e74c3c; }
+.choice-btn.wrong .choice-label { background: #e74c3c; color: white; }
+.choice-btn.reveal-correct { background: #e8f9f0; border-color: #2ecc71; }
+.choice-btn.reveal-correct .choice-label { background: #2ecc71; color: white; }
+.choice-btn:disabled { cursor: default; }
+.feedback { border-radius: 10px; padding: 12px 16px; margin-bottom: 14px; font-size: 14px; line-height: 1.7; display: none; }
+.feedback.correct { background: #e8f9f0; color: #1a5c38; border: 1px solid #a3d9b8; }
+.feedback.wrong { background: #fef0f0; color: #8b1a1a; border: 1px solid #f5c0c0; }
+.nav-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.nav-btn { flex: 1; min-width: 80px; padding: 12px 8px; border: 2px solid #c8c4f0; border-radius: 10px; background: white; font-size: 14px; font-weight: 600; color: #4b44c8; cursor: pointer; transition: background 0.15s; }
+.nav-btn:hover { background: #ede9fa; }
+.nav-btn.primary { background: #4b44c8; color: white; border-color: #4b44c8; }
+.nav-btn.primary:hover { background: #3d37a8; }
+.nav-btn:disabled { opacity: 0.35; cursor: default; }
+
+/* 結果ページ */
+.result-screen { display: none; padding-bottom: 2rem; }
+.result-hero { text-align: center; padding: 2rem 1rem 1.5rem; }
+.result-total-score { font-size: 52px; font-weight: 700; color: #4b44c8; }
+.result-total-label { font-size: 15px; color: #666; margin-top: 4px; }
+.result-rank { display: inline-block; margin-top: 12px; padding: 6px 20px; border-radius: 20px; font-size: 15px; font-weight: 700; }
+
+/* レーダーチャート */
+.chart-wrap { background: white; border-radius: 12px; padding: 1.25rem; margin-bottom: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); text-align: center; }
+.chart-title { font-size: 14px; font-weight: 600; color: #444; margin-bottom: 12px; }
+
+/* カテゴリー別カード */
+.cat-cards { display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px; }
+.cat-card { background: white; border-radius: 12px; padding: 1rem 1.25rem; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+.cat-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.cat-name { font-size: 14px; font-weight: 700; color: #333; }
+.cat-score-badge { font-size: 13px; font-weight: 700; padding: 3px 12px; border-radius: 20px; }
+.cat-bar-wrap { background: #f0eeff; border-radius: 6px; height: 10px; margin-bottom: 10px; }
+.cat-bar { height: 10px; border-radius: 6px; transition: width 0.6s; }
+.cat-comment { font-size: 13px; color: #555; line-height: 1.7; }
+
+/* 総合コメント */
+.summary-card { background: #4b44c8; color: white; border-radius: 12px; padding: 1.25rem; margin-bottom: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.12); }
+.summary-title { font-size: 14px; font-weight: 700; margin-bottom: 8px; opacity: 0.85; }
+.summary-text { font-size: 14px; line-height: 1.8; }
+
+.btn-retry { background: #4b44c8; color: white; border: none; padding: 14px; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; width: 100%; }
+</style>
+</head>
+<body>
+<div class="header">
+  <span style="font-size:20px;">📖</span>
+  <span class="header-title">集中力発揮の成果を出すのはAorB</span>
+  <div class="header-icons">
+    <button class="icon-btn" title="シャッフル" onclick="doShuffle()">⇄</button>
+    <button class="icon-btn" title="最初から" onclick="restart()">↺</button>
+  </div>
+</div>
+<div class="progress-bar-wrap"><div class="progress-bar" id="prog"></div></div>
+
+<div class="container">
+  <div id="quiz-area">
+    <div class="meta">
+      <span id="q-count">問題 1 / 50</span>
+      <span class="correct-count" id="c-count">正解：0 問</span>
+    </div>
+    <div class="card">
+      <div class="q-header">
+        <span class="q-badge" id="q-label">Q1</span>
+        <span class="q-tag" id="q-tag"></span>
+      </div>
+      <p class="question-text" id="q-text"></p>
+    </div>
+    <div class="choice-row" id="choice-row"></div>
+    <div class="feedback" id="feedback"></div>
+    <div class="nav-row">
+      <button class="nav-btn" id="btn-prev" onclick="goPrev()">◀ 前へ</button>
+      <button class="nav-btn primary" id="btn-next" onclick="goNext()" style="display:none;">次へ ▶</button>
+      <button class="nav-btn" onclick="restart()">🔄 最初から</button>
+    </div>
+  </div>
+
+  <div class="result-screen" id="result-screen">
+    <div class="result-hero">
+      <div class="result-total-score" id="res-score"></div>
+      <div class="result-total-label" id="res-total-label"></div>
+      <div class="result-rank" id="res-rank"></div>
+    </div>
+    <div class="chart-wrap">
+      <div class="chart-title">カテゴリー別スコア</div>
+      <canvas id="radarChart" width="320" height="320"></canvas>
+    </div>
+    <div class="cat-cards" id="cat-cards"></div>
+    <div class="summary-card">
+      <div class="summary-title">📝 総合コメント</div>
+      <div class="summary-text" id="summary-text"></div>
+    </div>
+    <button class="btn-retry" onclick="restart()">もう一度チャレンジ</button>
+  </div>
+</div>
+
+<script>
+// カテゴリー定義（各10問）
+const CATEGORIES = [
+  { id:'mindset', name:'🧠 マインドセット', color:'#7c6fcd', light:'#ede9fa',
+    tags:['成功の方程式','夢・目標','成長・進化','成功イメージ','自己価値観','強みの活かし方','時間の考え方','言葉の力','自己信頼','教育'] },
+  { id:'mental',  name:'💪 メンタル・集中', color:'#e67e22', light:'#fef3e2',
+    tags:['メンタル','集中・マインド','集中・動作','エネルギー'] },
+  { id:'body',    name:'🌬️ 心技体・呼吸',  color:'#27ae60', light:'#e8f9f0',
+    tags:['心技体','集中・呼吸','健康・姿勢','心身の繋がり'] },
+  { id:'skill',   name:'📚 学び・スキル',  color:'#2980b9', light:'#e6f1fb',
+    tags:['学び方','習慣・記憶','習慣化','PREP法','コミュニケーション','現代の行動'] },
+  { id:'action',  name:'🎯 行動・実践',    color:'#c0392b', light:'#fef0f0',
+    tags:['試合・挑戦','整理整頓','目標設定','学ぶ姿勢','視野トレーニング'] }
+];
+
+const quizData = [
+  { tag:"成功の方程式", q:"成果を最大化する方程式として正しいのはどちら？", choices:["結果 ＝ 質 × 量²","結果 ＝ 質 ＋ 量"], answer:0 },
+  { tag:"成功の方程式", q:"量が「2乗」で効いてくる理由として正しいのはどちら？", choices:["量が増えても結果への影響は一定だから","量が増えるほど結果が曲線的（指数関数的）に増大するから"], answer:1 },
+  { tag:"夢・目標", q:"将来の夢が見つからない時の行動基準として正しいのはどちら？", choices:["自分が「ときめく」もの、興味を惹かれるものを大事にする","周りの人が勧めるものを基準に行動する"], answer:0 },
+  { tag:"現代の行動", q:"憧れの人に相談したい時、現代で推奨される行動はどちら？", choices:["有名人だから諦めて間接的な情報収集だけする","インスタのDMなどで直接連絡を取ってみる"], answer:1 },
+  { tag:"心技体", q:"「心技体」でパフォーマンスの土台となる要素はどちら？", choices:["技（スキルや技術）","心（考え方やメンタル）"], answer:1 },
+  { tag:"心技体", q:"指の長さが変わるワークが示す心と体の関係はどちら？", choices:["心が変われば体（物理的状態）まで変わる","体を鍛えれば心も自然についてくる"], answer:0 },
+  { tag:"習慣・記憶", q:"一度身につけた感覚や知識を定着させるために必要なのはどちら？", choices:["集中して一気に詰め込む","毎日コツコツ継続し、短期記憶を長期記憶に定着させる"], answer:1 },
+  { tag:"エネルギー", q:"試合前の「礼」のエネルギー的な意味として正しいのはどちら？", choices:["天とつながりチャクラを通じてエネルギーを取り入れる","相手への敬意を示す形式的な動作である"], answer:0 },
+  { tag:"エネルギー", q:"エネルギーの法則として正しいのはどちら？", choices:["先に感謝やエネルギーを「出す」と自分に「入って」くる","まず自分がもらってから相手に返す"], answer:0 },
+  { tag:"健康・姿勢", q:"授業前に足裏を床につけて姿勢を正すメリットはどちら？", choices:["背筋が伸びるだけで特に健康効果はない","舌が正しい位置につき呼吸が深くなり病気になりにくくなる"], answer:1 },
+  { tag:"メンタル", q:"肩を上げてストンと落とす動作で意識すべきことはどちら？", choices:["首の力を抜くこと","肩甲骨を後ろでくっつけること"], answer:1 },
+  { tag:"メンタル", q:"本番で緊張した時に唱えるべき合言葉はどちら？", choices:["マイナス × マイナス ＝ プラス","冷静に、落ち着いて、ゆっくり"], answer:0 },
+  { tag:"集中・呼吸", q:"呼吸法で鼻から吸うことが推奨される理由はどちら？", choices:["鼻から吸う方が口より深く吸えるから","鼻を通ることで空気が冷やされ脳をクールダウンできるから"], answer:1 },
+  { tag:"集中・呼吸", q:"「5・3・8呼吸法」の正しい手順はどちら？", choices:["3秒吸い・5秒止め・8秒かけてゆっくり吐く","5秒吸い・3秒止め・8秒かけてゆっくり吐く"], answer:1 },
+  { tag:"集中・呼吸", q:"「落ちてくく」のイメージの正しい意味はどちら？", choices:["気を下に降ろし意識を落ち着かせること","肩の力を抜いて上半身をリラックスさせること"], answer:0 },
+  { tag:"エネルギー", q:"へその下にあるエネルギーの拠点の正しい名称はどちら？", choices:["第三チャクラ","丹田（たんでん）"], answer:1 },
+  { tag:"集中・マインド", q:"「音3つ見つけ」ワークの目的として正しいのはどちら？", choices:["聴覚を鍛えて周囲の情報を素早くキャッチすること","意識を「今、ここ」に引き戻し心を整えること"], answer:1 },
+  { tag:"集中・マインド", q:"特定の対象に意識を絞る集中力の名称はどちら？", choices:["一点集中（フォーカス）","全体集中（コンセントレーション）"], answer:0 },
+  { tag:"集中・マインド", q:"周囲の状況を広く捉える集中力の名称はどちら？", choices:["一点集中（フォーカス）","全体集中（コンセントレーション）"], answer:1 },
+  { tag:"集中・マインド", q:"一点集中と全体集中を日常で交互に鍛えるトレーニング例はどちら？", choices:["食事中に一品に集中することと全体の献立を見ることを繰り返す","音楽を聴きながら読書をして二つに同時に集中する"], answer:0 },
+  { tag:"学び方", q:"何かを習得する際の基本的な心がけとして正しいのはどちら？", choices:["速く、大量に、効率よく","ゆっくり、丁寧に、心を込めて"], answer:1 },
+  { tag:"PREP法", q:"「PREP法」の「P（Point）」が指すものはどちら？", choices:["問題提起（何が課題かを示す）","結論・要点（まず何を伝えたいか）"], answer:1 },
+  { tag:"PREP法", q:"「PREP法」の「R（Reason）」が指すものはどちら？", choices:["理由（なぜならば、という根拠）","結果（どうなったかを示す）"], answer:0 },
+  { tag:"PREP法", q:"「PREP法」の「E（Example）」が指すものはどちら？", choices:["エビデンス（統計や数値データ）","具体的な例（相手に映像が浮かぶエピソード）"], answer:1 },
+  { tag:"コミュニケーション", q:"相手に感動してもらう話し方のコツはどちら？", choices:["相手の脳内に「映像」が浮かぶように具体的に話す","論理的に順序立てて抽象的に話す"], answer:0 },
+  { tag:"整理整頓", q:"「整理」の最初にすべき行動として正しいのはどちら？", choices:["すべてのものをきれいに並べて収納する","いるものといらないものを分けいらないものを捨てる"], answer:1 },
+  { tag:"整理整頓", q:"「整頓」の正しい定義はどちら？", choices:["必要なものをいつでも取り出せるよう決まった場所に置く","不要なものを見えないところに隠す"], answer:0 },
+  { tag:"成長・進化", q:"森氏が定義する「成長」として正しいのはどちら？", choices:["できることをより速く正確にできるようになること","できなかったことができるようになること"], answer:1 },
+  { tag:"成長・進化", q:"森氏が定義する「進化」として正しいのはどちら？", choices:["成果を繰り返し一段上のステージへ上がること","毎日少しずつ改善を積み重ねること"], answer:0 },
+  { tag:"試合・挑戦", q:"試合（試し合い）の目的として正しいのはどちら？", choices:["勝つことと相手の弱点を探すこと","結果を出すことと課題を見つけること"], answer:1 },
+  { tag:"試合・挑戦", q:"一流アスリートがミス時にニヤリと笑う理由はどちら？", choices:["伸びしろ（課題）を発見し成長のチャンスと捉えているから","緊張を和らげるためのルーティンだから"], answer:0 },
+  { tag:"メンタル", q:"試験前に脳をリラックスさせるアファーメーションはどちら？", choices:["「できる、できる」","「簡単、簡単」"], answer:1 },
+  { tag:"成功イメージ", q:"「成功は2度起きる」の意味として正しいのはどちら？", choices:["頭の中（イメージ）で成功し次に現実で成功する","一度の成功を繰り返し体に染み込ませる"], answer:0 },
+  { tag:"集中・動作", q:"ジャグリングの練習で冷静さを保つ秘訣はどちら？", choices:["一つ一つの動作を「丁寧」に行うこと","速さを意識して反射的に動くこと"], answer:0 },
+  { tag:"時間の考え方", q:"物理学者の視点に基づく時間の考え方として正しいのはどちら？", choices:["「過去の経験が未来を決める」という考え方","「過去は関係なく今しかない」という考え方"], answer:1 },
+  { tag:"言葉の力", q:"運を引き寄せるために1日10回以上唱えると良い言葉はどちら？", choices:["「今日もいい日になる」","「俺（私）って幸せだなぁ」"], answer:1 },
+  { tag:"自己信頼", q:"誰も見ていない場所でゴミ拾いをすることが自信につながる理由はどちら？", choices:["見えないところで善いことをしている自分を自分自身が好きになれるから","善い行動は必ず誰かに見られていて評価されるから"], answer:0 },
+  { tag:"メンタル", q:"頭が真っ白になった時に客観性を取り戻すテクニックはどちら？", choices:["目を閉じて深呼吸を10回くり返すこと","自分の状況を心の中で「実況中継」すること"], answer:1 },
+  { tag:"教育", q:"「減点主義」の弊害として述べられているのはどちら？", choices:["「弱み」ばかりにフォーカスしてしまいがちになること","「強み」への過信が生まれてしまうこと"], answer:0 },
+  { tag:"強みの活かし方", q:"社会で活躍するためにフォーカスすべきはどちら？", choices:["自分の「弱み」を克服すること","自分の「強み」や「いいところ」"], answer:1 },
+  { tag:"習慣化", q:"「イフデン（If-Then）法」の正しい説明はどちら？", choices:["「もし〜したら、その時に〜する」と行動タイミングを固定する","「もしできなかったら、ペナルティを課す」と自分を律する"], answer:0 },
+  { tag:"視野トレーニング", q:"視野を広げるトレーニングで眼球を動かす際のポイントはどちら？", choices:["できるだけ速く眼球を動かしてターゲットを追う","顔を動かさず目だけでターゲットを「心でタッチ」するように追う"], answer:1 },
+  { tag:"視野トレーニング", q:"周辺視野が広がることのスポーツでの利点はどちら？", choices:["ボールに集中しながら相手や味方の動きを同時に把握できる","自分のフォームを意識しながら全体の戦況を読める"], answer:0 },
+  { tag:"心身の繋がり", q:"体の不調を治したい時にまずアプローチすべき場所はどちら？", choices:["体（ストレッチや運動）","心（正しいこと）"], answer:1 },
+  { tag:"心身の繋がり", q:"心を元気にしたい時にアプローチすべき場所はどちら？", choices:["体（を楽にすること、動かすこと）","心（ポジティブな言葉を唱えること）"], answer:0 },
+  { tag:"目標設定", q:"高校3年間の卒業時に達成すべき2つの目標として正しいのはどちら？", choices:["自分を好きになることと学ぶことが楽しいと思えること","成績上位10%に入ることと部活で結果を出すこと"], answer:0 },
+  { tag:"学ぶ姿勢", q:"「学ぶことが楽しい」と思うことが重要な理由はどちら？", choices:["学校の成績が将来の収入に直結するから","大人の平均勉強時間は1日6分、学び続ける力が一生の武器になるから"], answer:1 },
+  { tag:"メンタル", q:"プレッシャーがかかる場面で力を入れるべき場所はどちら？", choices:["お腹（丹田）","両手のこぶし"], answer:0 },
+  { tag:"集中・呼吸", q:"授業前のインプット効率を高めるためにすべきことはどちら？", choices:["事前に教科書を速読して内容を予習しておく","姿勢を正し呼吸を整え周囲の音を3つ見つけて心を「今」に置く"], answer:1 },
+  { tag:"自己価値観", q:"「ときめき」を大切にすべき最大の理由はどちら？", choices:["自分の好きなことを仕事にした方が収入が高くなりやすいから","答えは親でも先生でもなく自分自身の中にしか存在しないから"], answer:1 }
+];
+
+// 各問題がどのカテゴリーに属するかマッピング
+function getCatIndex(tag) {
+  for (let i = 0; i < CATEGORIES.length; i++) {
+    if (CATEGORIES[i].tags.includes(tag)) return i;
+  }
+  return 0;
+}
+
+const total = quizData.length;
+let order = [...Array(total).keys()];
+let idx = 0;
+let answered = new Array(total).fill(null);
+
+function countCorrect() {
+  return answered.filter(v => v === true).length;
+}
+
+function doShuffle() {
+  for (let i = order.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [order[i], order[j]] = [order[j], order[i]];
+  }
+  restart();
+}
+
+function render() {
+  const qi = order[idx];
+  const q = quizData[qi];
+  const correct = countCorrect();
+  document.getElementById('q-count').textContent = `問題 ${idx+1} / ${total}`;
+  document.getElementById('c-count').textContent = `正解：${correct} 問`;
+  document.getElementById('q-label').textContent = `Q${idx+1}`;
+  document.getElementById('q-tag').textContent = q.tag;
+  document.getElementById('q-text').textContent = q.q;
+  document.getElementById('prog').style.width = ((idx / total) * 100) + '%';
+
+  const choiceRow = document.getElementById('choice-row');
+  choiceRow.innerHTML = '';
+  ['A','B'].forEach((lbl, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn';
+    btn.innerHTML = `<span class="choice-label">${lbl}</span><span>${q.choices[i]}</span>`;
+    btn.onclick = () => selectAnswer(i);
+    choiceRow.appendChild(btn);
+  });
+
+  const fb = document.getElementById('feedback');
+  fb.style.display = 'none';
+  fb.className = 'feedback';
+  document.getElementById('btn-next').style.display = 'none';
+  document.getElementById('btn-prev').disabled = (idx === 0);
+
+  if (answered[qi] !== null) restoreAnswered(qi);
+}
+
+function selectAnswer(chosen) {
+  const qi = order[idx];
+  const q = quizData[qi];
+  if (answered[qi] !== null) return;
+  answered[qi] = (chosen === q.answer);
+  restoreAnswered(qi, chosen);
+}
+
+function restoreAnswered(qi, chosen) {
+  const q = quizData[qi];
+  const btns = document.getElementById('choice-row').querySelectorAll('.choice-btn');
+  const wasCorrect = answered[qi];
+  const selectedIdx = (chosen !== undefined) ? chosen : (wasCorrect ? q.answer : (q.answer === 0 ? 1 : 0));
+
+  btns.forEach((btn, i) => {
+    btn.disabled = true;
+    if (i === q.answer) btn.classList.add('reveal-correct');
+    if (i === selectedIdx && i !== q.answer) btn.classList.add('wrong');
+    if (i === selectedIdx && i === q.answer) { btn.classList.remove('reveal-correct'); btn.classList.add('correct'); }
+  });
+
+  const fb = document.getElementById('feedback');
+  fb.style.display = 'block';
+  if (wasCorrect) {
+    fb.className = 'feedback correct';
+    fb.textContent = '✓ 正解！';
+  } else {
+    fb.className = 'feedback wrong';
+    fb.textContent = `✕ 不正解。正解は「${ ['A','B'][q.answer]}: ${q.choices[q.answer]}」`;
+  }
+
+  const isLast = idx === total - 1;
+  const btnNext = document.getElementById('btn-next');
+  btnNext.style.display = 'block';
+  btnNext.textContent = isLast ? '結果を見る ▶' : '次へ ▶';
+}
+
+function goNext() {
+  idx++;
+  if (idx >= total) { showResult(); return; }
+  render();
+}
+
+function goPrev() {
+  if (idx <= 0) return;
+  idx--;
+  render();
+}
+
+// ===== 結果画面 =====
+function calcCatScores() {
+  // 各カテゴリーの正解数と問題数を集計
+  const stats = CATEGORIES.map(() => ({ correct: 0, total: 0 }));
+  quizData.forEach((q, qi) => {
+    const ci = getCatIndex(q.tag);
+    stats[ci].total++;
+    if (answered[qi] === true) stats[ci].correct++;
+  });
+  // 10点満点に換算
+  return stats.map(s => s.total > 0 ? Math.round((s.correct / s.total) * 10) : 0);
+}
+
+function getCatComment(catId, score) {
+  const comments = {
+    mindset: [
+      { min:9, text:"マインドセットは完璧！森先生の「成果の方程式」や「ときめき」の哲学を深く理解しています。この考え方を日常に活かせています。" },
+      { min:7, text:"マインドセットの基礎はしっかり身についています。「成功は2度起きる」などのイメージ戦略をさらに意識してみましょう。" },
+      { min:5, text:"マインドセットの概念は理解しつつあります。成長と進化の違い、言葉の力などを改めて復習すると理解が深まります。" },
+      { min:0, text:"マインドセットの基礎から見直しましょう。夢の見つけ方、成果の方程式など、森先生の考え方の核心部分です。" }
+    ],
+    mental: [
+      { min:9, text:"メンタル・集中力の知識は優秀！丹田、実況中継テクニック、マイナス×マイナスの合言葉など完璧に把握しています。" },
+      { min:7, text:"メンタルコントロールの手法をよく理解しています。エネルギーの出し入れや集中の種類をさらに実践に落とし込みましょう。" },
+      { min:5, text:"メンタル面の知識は半分程度です。緊張時の対処法や集中力の種類（一点・全体）を重点的に復習してみてください。" },
+      { min:0, text:"メンタルと集中力の章を中心に復習しましょう。試合前の合言葉、実況中継法など実践的なテクニックが学べます。" }
+    ],
+    body: [
+      { min:9, text:"心技体・呼吸法の知識は満点クラス！5・3・8呼吸法や丹田呼吸を完全にマスターしています。体でも実践できているはずです。" },
+      { min:7, text:"呼吸と姿勢の重要性をよく理解しています。心と体のつながりについてさらに深めると、パフォーマンスが上がります。" },
+      { min:5, text:"心技体の基礎知識はあります。呼吸法の手順や、体にアプローチすることで心が変わるメカニズムを復習しましょう。" },
+      { min:0, text:"呼吸法と心技体は森先生の実践の核心です。5・3・8呼吸法から丁寧に学び直すことをおすすめします。" }
+    ],
+    skill: [
+      { min:9, text:"学び・スキルの知識は完璧！PREP法、If-Then法、習慣化の技術を完全に把握し、コミュニケーションにも活かせるはずです。" },
+      { min:7, text:"学習スキルは高いレベルにあります。「ゆっくり丁寧に心を込めて」の精神でPREP法などをさらに実践しましょう。" },
+      { min:5, text:"学び方の知識は半分程度です。If-Then法やPREP法など、具体的なスキルツールを重点的に押さえましょう。" },
+      { min:0, text:"学び・スキルの章は実践に直結する内容が多いです。PREP法、習慣化、コミュニケーション術から学び直しましょう。" }
+    ],
+    action: [
+      { min:9, text:"行動・実践の知識は圧巻！試合の目的、整理整頓の定義、視野トレーニングまで完璧に理解し、実行できるレベルです。" },
+      { min:7, text:"行動と実践の姿勢はできています。整理整頓の定義や視野を広げるトレーニングをより深く実践してみましょう。" },
+      { min:5, text:"行動力の基礎はあります。試合（試し合い）の目的意識や、目標設定の2つの軸を改めて確認してみてください。" },
+      { min:0, text:"行動・実践の章を重点的に復習しましょう。整理整頓、目標設定、視野トレーニングなど日常に使える知識が多いです。" }
+    ]
+  };
+  const list = comments[catId];
+  for (const c of list) {
+    if (score >= c.min) return c.text;
+  }
+  return list[list.length - 1].text;
+}
+
+function getSummaryComment(total10, catScores) {
+  const minCat = CATEGORIES[catScores.indexOf(Math.min(...catScores))].name;
+  const maxCat = CATEGORIES[catScores.indexOf(Math.max(...catScores))].name;
+  if (total10 >= 90) {
+    return `全カテゴリーで非常に高い理解度を示しています。森先生の教えを体系的に把握し、実践レベルに達しています。特に${maxCat}は完璧です。この知識を日常のパフォーマンス向上に活かし続けてください。あなたはすでに「成果を出す人」の思考と行動を持っています！`;
+  } else if (total10 >= 70) {
+    return `全体的に高い理解度です！${maxCat}が特に優れています。${minCat}をさらに強化することで、森先生の教えをより完全に体現できます。「成功は2度起きる」——まず頭の中でのイメージを完成させましょう。もう一歩で満点です！`;
+  } else if (total10 >= 50) {
+    return `基礎はしっかり身についています。${maxCat}は自信を持ってください。一方で${minCat}に復習の余地があります。「ゆっくり、丁寧に、心を込めて」——森先生の言葉通りに、苦手分野を一つずつ丁寧に学び直すことで確実に伸びます。`;
+  } else {
+    return `これからが伸び代です！「量が2乗で効いてくる」——今は量を積み重ねる時期です。${minCat}から優先的に復習し、シャッフルモードで何度も挑戦してみてください。森先生の成功の方程式「結果 ＝ 質 × 量²」を体現していきましょう！`;
+  }
+}
+
+function drawRadar(scores) {
+  const canvas = document.getElementById('radarChart');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const cx = W / 2, cy = H / 2;
+  const R = Math.min(W, H) / 2 - 48;
+  const n = 5;
+  ctx.clearRect(0, 0, W, H);
+
+  // グリッド
+  for (let g = 1; g <= 5; g++) {
+    const r = R * g / 5;
+    ctx.beginPath();
+    for (let i = 0; i < n; i++) {
+      const a = (Math.PI * 2 * i / n) - Math.PI / 2;
+      const x = cx + r * Math.cos(a);
+      const y = cy + r * Math.sin(a);
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.strokeStyle = '#e0ddf8';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
+  // 軸線
+  for (let i = 0; i < n; i++) {
+    const a = (Math.PI * 2 * i / n) - Math.PI / 2;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx + R * Math.cos(a), cy + R * Math.sin(a));
+    ctx.strokeStyle = '#c8c4f0';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
+  // データ
+  ctx.beginPath();
+  scores.forEach((s, i) => {
+    const a = (Math.PI * 2 * i / n) - Math.PI / 2;
+    const r = R * s / 10;
+    const x = cx + r * Math.cos(a);
+    const y = cy + r * Math.sin(a);
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  });
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(75, 68, 200, 0.18)';
+  ctx.fill();
+  ctx.strokeStyle = '#4b44c8';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // 点
+  scores.forEach((s, i) => {
+    const a = (Math.PI * 2 * i / n) - Math.PI / 2;
+    const r = R * s / 10;
+    ctx.beginPath();
+    ctx.arc(cx + r * Math.cos(a), cy + r * Math.sin(a), 5, 0, Math.PI * 2);
+    ctx.fillStyle = '#4b44c8';
+    ctx.fill();
+  });
+
+  // ラベル
+  const labelNames = ['マインド', 'メンタル', '心技体', '学び', '行動'];
+  ctx.font = '12px Hiragino Sans, Meiryo, sans-serif';
+  ctx.fillStyle = '#444';
+  ctx.textAlign = 'center';
+  scores.forEach((s, i) => {
+    const a = (Math.PI * 2 * i / n) - Math.PI / 2;
+    const lr = R + 32;
+    const lx = cx + lr * Math.cos(a);
+    const ly = cy + lr * Math.sin(a);
+    ctx.fillText(labelNames[i], lx, ly + 4);
+    ctx.fillStyle = '#4b44c8';
+    ctx.font = '11px Hiragino Sans, Meiryo, sans-serif';
+    ctx.fillText(`${s}点`, lx, ly + 18);
+    ctx.fillStyle = '#444';
+    ctx.font = '12px Hiragino Sans, Meiryo, sans-serif';
+  });
+}
+
+function showResult() {
+  document.getElementById('quiz-area').style.display = 'none';
+  const rs = document.getElementById('result-screen');
+  rs.style.display = 'block';
+  document.getElementById('prog').style.width = '100%';
+
+  const catScores = calcCatScores();
+  const totalCorrect = countCorrect();
+  const pct = totalCorrect / total;
+  const total10 = Math.round(pct * 100);
+
+  document.getElementById('res-score').textContent = totalCorrect;
+  document.getElementById('res-total-label').textContent = `/ ${total} 問正解　（${total10}点 / 100点）`;
+
+  let rank, rankBg, rankColor;
+  if (total10 >= 90) { rank = '🏆 Sランク：森先生の申し子'; rankBg = '#fff8e1'; rankColor = '#b8860b'; }
+  else if (total10 >= 70) { rank = '🥇 Aランク：実践者レベル'; rankBg = '#e8f9f0'; rankColor = '#1a7a4a'; }
+  else if (total10 >= 50) { rank = '🥈 Bランク：理解者レベル'; rankBg = '#e6f1fb'; rankColor = '#1a5f9a'; }
+  else { rank = '📖 Cランク：学習者レベル'; rankBg = '#fef0f0'; rankColor = '#c0392b'; }
+
+  const rankEl = document.getElementById('res-rank');
+  rankEl.textContent = rank;
+  rankEl.style.background = rankBg;
+  rankEl.style.color = rankColor;
+  rankEl.style.border = `1.5px solid ${rankColor}`;
+
+  // レーダーチャート
+  setTimeout(() => drawRadar(catScores), 100);
+
+  // カテゴリー別カード
+  const catCardsEl = document.getElementById('cat-cards');
+  catCardsEl.innerHTML = '';
+  CATEGORIES.forEach((cat, i) => {
+    const s = catScores[i];
+    const card = document.createElement('div');
+    card.className = 'cat-card';
+    card.innerHTML = `
+      <div class="cat-card-header">
+        <span class="cat-name">${cat.name}</span>
+        <span class="cat-score-badge" style="background:${cat.light};color:${cat.color}">${s} / 10点</span>
+      </div>
+      <div class="cat-bar-wrap">
+        <div class="cat-bar" style="width:${s*10}%;background:${cat.color}"></div>
+      </div>
+      <div class="cat-comment">${getCatComment(cat.id, s)}</div>
+    `;
+    catCardsEl.appendChild(card);
+  });
+
+  // 総合コメント
+  document.getElementById('summary-text').textContent = getSummaryComment(total10, catScores);
+}
+
+function restart() {
+  idx = 0;
+  answered = new Array(total).fill(null);
+  document.getElementById('quiz-area').style.display = 'block';
+  document.getElementById('result-screen').style.display = 'none';
+  render();
+}
+
+render();
+</script>
+</body>
+</html>
